@@ -50,7 +50,7 @@ process_pubmedqa("dev")
 def process_bioasq(fname):
     dname = "bioasq"
     print (dname, fname)
-    df = pd.read_csv(open(f"raw_data/blurb/data_generation/data/BioASQ/{fname}.tsv"), sep="\t", header=None)
+    df = pd.read_csv(open(f"raw_data/blurb/data_generation/{fname}.tsv"), sep="\t", header=None)
     outs, lens = [], []
     for _, row in df.iterrows():
         id       = row[0].strip()
