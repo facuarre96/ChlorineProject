@@ -70,7 +70,9 @@ task_to_keys = {
     "sst2": ("sentence", None),
     "stsb": ("sentence1", "sentence2"),
     "wnli": ("sentence1", "sentence2"),
+    "paper_classification": ("title", "abstract")  # New task for title and abstract
 }
+
 
 logger = logging.getLogger(__name__)
 
@@ -378,7 +380,10 @@ def main():
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
-        sentence1_key, sentence2_key = task_to_keys[data_args.task_name]
+        if data_args.task_name == "paper_classification":
+            sentence1_key, sentence2_key = "title", "abstract"
+        else:
+            sentence1_key, sentence2_key = task_to_keys[data_args.task_name]
     else:
         # Again, we try to have some nice defaults but don't hesitate to tweak to your use case.
         non_label_column_names = [name for name in raw_datasets["train"].column_names if name != "label"]
@@ -437,24 +442,26 @@ def main():
         #return "<|QUESTION|>" + text + "<|ANSWER|>"
 
     def preprocess_function(examples):
-        
         # Tokenize the texts
-        contexts = examples[sentence2_key]
-        questions = examples[sentence1_key]
+        titles = examples[sentence1_key]
+        abstracts = examples[sentence2_key]
 
         args = (
-            (examples[sentence1_key],) if sentence2_key is None else (contexts, questions)
+            (examples[sentence1_key],) if sentence2_key is None else (titles, abstracts)
         )
 
-        result = tokenizer(*args, padding=padding, max_length=max_seq_length, truncation=True)
+        # Determine padding strategy
+        padding_strategy = "max_length" if data_args.pad_to_max_length else "longest"
 
-        #Added for GPT2
+        result = tokenizer(*args, padding=padding_strategy, max_length=data_args.max_seq_length, truncation=True)
+
+        # Added for GPT-2
         if config.model_type in ["gpt2"] and data_args.gpt2_append_eos_tok:
-            assert padding == "max_length"
+            assert padding_strategy == "max_length"
             assert sorted(result.keys()) == sorted(["input_ids", "attention_mask"])
             input_ids = torch.tensor(result["input_ids"])
             attention_mask = torch.tensor(result["attention_mask"])
-            sequence_lengths = torch.clamp(input_ids.ne(tokenizer.pad_token_id).sum(-1), max=max_seq_length-1)
+            sequence_lengths = torch.clamp(input_ids.ne(tokenizer.pad_token_id).sum(-1), max=data_args.max_seq_length-1)
             input_ids[range(len(input_ids)), sequence_lengths] = tokenizer.eos_token_id
             attention_mask[range(len(input_ids)), sequence_lengths] = 1
             result["input_ids"] = input_ids.tolist()
@@ -473,6 +480,7 @@ def main():
             load_from_cache_file=not data_args.overwrite_cache,
             desc="Running tokenizer on dataset",
         )
+
     if training_args.do_train:
         if "train" not in raw_datasets:
             raise ValueError("--do_train requires a train dataset")

@@ -1,46 +1,60 @@
 import os
-import csv
 import json
-import random
-import shutil
-import numpy as np
 import pandas as pd
-from tqdm import tqdm
-
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 def dump_jsonl(data, fpath):
     with open(fpath, "w") as outf:
         for d in data:
-            print (json.dumps(d), file=outf)
+            print(json.dumps(d), file=outf)
 
-
-######################### BLURB sequence classification #########################
-root = "data"
-os.system(f"mkdir -p {root}")
-
-
-def process_chlorine(fname):
-    dname = "chlorine_safety"
+def process_chlorine(fname, sample_size=None, train_size=0.75, val_size=0.1, test_size=0.15, random_state=42):
+    dname = "chlorine_safety_mockup"
     print(dname, fname)
-    file_path = f"finetune/papercls/raw_data/{fname}.txt"
-    df = pd.read_csv(file_path, sep="\t", header=0,dtype=str)
-    outs, lens = [], []
-    for _, row in df.iterrows():
-        print('file done')
-        id = row[0].strip()
-        title = row[1].strip()
-        abstract = row[2].strip()
-        label = row[3].strip()
-        assert label in ["Relevant", "Irrelevant"]
-        outs.append({"id": id, "sentence1": title, "sentence2": abstract, "label": label})
-        lens.append(len(title) + len(abstract))
-    print("total", len(outs), "seqlen mean", int(np.mean(lens)), "median", int(np.median(lens)), "95th", int(np.percentile(lens, 95)), "max", np.max(lens))
-    #
+    print(os.getcwd())
+    df = pd.read_csv(open(f"finetune/papercls/raw_data/{fname}.txt"), sep="\t", header=0, dtype=str)
+    
+    # If sample_size is provided, take a random sample of the data
+    if sample_size is not None:
+        df = df.sample(n=sample_size, random_state=random_state)
+    # Check the sizes sum to 1
+    assert train_size + val_size + test_size == 1.0, "Train, validation and test sizes should sum to 1.0"
+    
+    # Shuffle and split the dataset
+    train_df, temp_df = train_test_split(df, train_size=train_size, random_state=random_state, stratify=df['label'])
+    val_df, test_df = train_test_split(temp_df, test_size=test_size/(test_size + val_size), random_state=random_state, stratify=temp_df['label'])
+    
+    # Convert dataframes to lists of dicts
+    def df_to_dict_list(df):
+        outs = []
+        label_map = {"Relevant": 1, "Irrelevant": 0}
+        lens = []
+        for _, row in df.iterrows():
+            id         = row[0].strip()
+            title      = row[1].strip()
+            abstract   = row[2].strip()
+            label      = row[3].strip()
+            assert label in ["Relevant", "Irrelevant"]
+            label = label_map[label]
+            outs.append({"id": id, "title": title, "abstract": abstract, "label": label})
+            lens.append(len(title) + len(abstract))
+        return outs, lens
+    
+    train_data, train_lens = df_to_dict_list(train_df)
+    val_data, val_lens = df_to_dict_list(val_df)
+    test_data, test_lens = df_to_dict_list(test_df)
+    
+    print(f"Train: total {len(train_data)}, seqlen mean {int(np.mean(train_lens))}, median {int(np.median(train_lens))}, 95th {int(np.percentile(train_lens, 95))}, max {np.max(train_lens)}")
+    print(f"Validation: total {len(val_data)}, seqlen mean {int(np.mean(val_lens))}, median {int(np.median(val_lens))}, 95th {int(np.percentile(val_lens, 95))}, max {np.max(val_lens)}")
+    print(f"Test: total {len(test_data)}, seqlen mean {int(np.mean(test_lens))}, median {int(np.median(test_lens))}, 95th {int(np.percentile(test_lens, 95))}, max {np.max(test_lens)}")
+    
     root = os.getcwd()
     os.makedirs(f"{root}/{dname}_hf", exist_ok=True)
-    dump_jsonl(outs, f"{root}/{dname}_hf/{fname}.json")
+    dump_jsonl(train_data, f"{root}/{dname}_hf/mockup_train.json")
+    dump_jsonl(val_data, f"{root}/{dname}_hf/mockup_val.json")
+    dump_jsonl(test_data, f"{root}/{dname}_hf/mockup_test.json")
 
-process_chlorine("test")
-process_chlorine("dev")
-process_chlorine("train")
+# Example usage
+process_chlorine("CHE_files_testing",sample_size=100)
 
