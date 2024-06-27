@@ -453,7 +453,8 @@ def main():
         # Determine padding strategy
         padding_strategy = "max_length" if data_args.pad_to_max_length else "longest"
 
-        result = tokenizer(*args, padding=padding_strategy, max_length=data_args.max_seq_length, truncation=True)
+        result = tokenizer(*args, padding=padding_strategy, max_length=data_args.max_seq_length, truncation_side="right")
+        #added truncation side as kwarg but it could be removed
 
         # Added for GPT-2
         if config.model_type in ["gpt2"] and data_args.gpt2_append_eos_tok:

@@ -5,15 +5,15 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 def dump_jsonl(data, fpath):
-    with open(fpath, "w") as outf:
+    with open(fpath, "w", encoding='utf-8') as outf:
         for d in data:
-            print(json.dumps(d), file=outf)
+            print(json.dumps(d, ensure_ascii=False), file=outf)
 
 def process_chlorine(fname, sample_size=None, train_size=0.75, val_size=0.1, test_size=0.15, random_state=42):
-    dname = "chlorine_safety_mockup"
+    dname = "chlorine_safety_mockup2"
     print(dname, fname)
     print(os.getcwd())
-    df = pd.read_csv(open(f"finetune/papercls/raw_data/{fname}.txt"), sep="\t", header=0, dtype=str)
+    df = pd.read_excel(f"finetune/papercls/raw_data/{fname}.xlsx", dtype=str)
     
     # If sample_size is provided, take a random sample of the data
     if sample_size is not None:
@@ -51,9 +51,9 @@ def process_chlorine(fname, sample_size=None, train_size=0.75, val_size=0.1, tes
     
     root = os.getcwd()
     os.makedirs(f"{root}/{dname}_hf", exist_ok=True)
-    dump_jsonl(train_data, f"{root}/{dname}_hf/mockup_train.json")
-    dump_jsonl(val_data, f"{root}/{dname}_hf/mockup_val.json")
-    dump_jsonl(test_data, f"{root}/{dname}_hf/mockup_test.json")
+    dump_jsonl(train_data, f"{root}/{dname}_hf/mockup2_train.json")
+    dump_jsonl(val_data, f"{root}/{dname}_hf/mockup2_val.json")
+    dump_jsonl(test_data, f"{root}/{dname}_hf/mockup2_test.json")
 
 # Example usage
 process_chlorine("CHE_files_testing",sample_size=100)
