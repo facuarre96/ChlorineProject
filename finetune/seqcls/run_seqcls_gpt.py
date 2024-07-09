@@ -50,9 +50,18 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 
-sys.path.insert(0, '..')
-from utils.custom_modeling_gpt2 import GPT2ForSequenceClassification
-from utils.custom_modeling_gpt_neo import GPTNeoForSequenceClassification
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+utils_dir = os.path.join(script_dir, '..', 'utils')
+sys.path.append(utils_dir)
+
+from custom_modeling_gpt2 import GPT2ForSequenceClassification
+from custom_modeling_gpt_neo import GPTNeoForSequenceClassification
+
+
+# sys.path.insert(0, '..')
+# from utils.custom_modeling_gpt2 import GPT2ForSequenceClassification
+# from utils.custom_modeling_gpt_neo import GPTNeoForSequenceClassification
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
