@@ -384,6 +384,10 @@ def main():
         tokenizer.add_tokens(["<|CONTEXT|>", "<|QUESTION1|>", "<|QUESTION2|>", "<|ANSWER|>"])
         embedding_layer = model.resize_token_embeddings(len(tokenizer))
         config.pad_token_id = tokenizer.pad_token_id
+        
+        # Asegurar que el token de padding esté en la configuración del modelo
+    if model.config.pad_token_id is None:
+        model.config.pad_token_id = tokenizer.pad_token_id
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
@@ -517,7 +521,7 @@ def main():
         if data_args.task_name is not None:
             metric = load_metric("glue", data_args.task_name)
         else:
-            metric = load_metric("accuracy")
+            metric = load_metric("accuracy",trust_remote_code=True)
 
         preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
         preds = np.squeeze(preds) if is_regression else np.argmax(preds, axis=1)
