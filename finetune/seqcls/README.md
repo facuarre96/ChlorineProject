@@ -1,5 +1,10 @@
-## Setting Up BLURB (PubMedQA and BioASQ)
+## Finetuning for SeqCls 
 
-1.) Download [BioASQ](http://www.bioasq.org/) and [PubMedQA](https://pubmedqa.github.io/) original data. Make sure when downloading and expanding the data that it matches these paths: `raw_data/blurb/data_generation/data/pubmedqa` and `raw_data/blurb/data_generation/data/BioASQ` in this directory. For more details, review the `preprocess_blurb_seqcls.py` script to see the specific paths the preprocessing script expects. For example, the path `raw_data/blurb/data_generation/data/pubmedqa/pqal_fold0` should exist when the data has been set up properly.
+1.) Download the json files from https://drive.google.com/drive/folders/19muqXjjyl6xMUy6afepaWV07dPcPmIMY,  there should be 4 files:
 
-2.) Run the `preprocess_medqa.py` script in this directory to produce the data in the format expected by our fine-tuning code. It should produce the appropriate `.jsonl` files in `data/pubmedqa_hf` and `data/bioasq_hf`.
+    > train.json ---> train dataset for seqcls save in path: ChlorineProject\pubmedqa_hf\train.json
+    > dev.json -----> validation dataset for seqcls save in path: ChlorineProject\pubmedqa_hf\dev.json
+    > test.json ----> test dataset for seqcls save in path: ChlorineProject\pubmedqa_hf\test.json
+    > config.json --> config file for training save in path: ChlorineProject\finetune\seqcls\config.json
+
+2.) Run "finetuning_for_seqcls.ipynb" in ChlorineProject\notebooks. This notebook install all the requierements and finetunes the model. The model with new weights will be saved in ClorineProject\runs. By running the last cell of the notebook a csv files with predictions for the test set will be saved in ChlorineProject.
